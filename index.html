@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blackjack — The Greginning</title>
+  <style>
+    :root{
+      --bg: #0b1020; --accent:#6ee7ff; --danger:#ff6b6b; --ok:#75ffa1; --text:#e6f0ff; --muted:#9fb0d1; --card:#fff; --card-border:#d6dee7; --shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background: radial-gradient(1200px 600px at 15% 0%, #1a2551 0%, #0d1430 60%, #090e1f 100%), var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .title{display:flex;gap:12px;align-items:center}
+    .logo{width:40px;height:40px;border-radius:12px;background: conic-gradient(from 210deg, #47a3ff, #22ff88, #47a3ff);filter:saturate(1.2);box-shadow:var(--shadow)}
+    h1{font-size:24px;margin:0}
+    .sub{color:var(--muted);font-size:13px}
+    .pill{padding:4px 10px;border:1px solid rgba(255,255,255,.18);border-radius:999px}
+
+    /* Panels */
+    .panel{background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow);margin-top:14px}
+
+    /* Top stats bar */
+    .stats{display:flex;gap:22px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .stat b{font-size:22px}
+
+    /* Felt */
+    .felt{border-radius:18px;padding:54px 18px 110px;min-height:460px;background: radial-gradient(1400px 520px at 50% -8%, #1c2a61 0%, #122053 45%, #0b1330 100%);border:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden;margin-top:16px}
+    .felt:before{content:"BLACKJACK PAYS 3 TO 2 • GREG STANDS ON ALL 17s";position:absolute;left:50%;bottom:92px;transform:translateX(-50%);letter-spacing:.15em;font-size:11px;color:#b9caff;opacity:.65}
+    .felt.jerk-win{animation: shake .35s ease-in-out 0s 1}
+    @keyframes shake{0%{transform:translateX(0)}25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}100%{transform:translateX(0)}}
+
+    .hand{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;justify-content:center}
+    .hand .label{font-size:13px;color:var(--muted);text-align:center;width:100%;margin-top:6px}
+
+    .card{width:66px;height:92px;border-radius:10px;background:var(--card);border:1px solid var(--card-border);position:relative;box-shadow:0 8px 16px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;color:#111;transform-origin:bottom center;animation: pop .2s ease-out}
+    @keyframes pop{from{transform:scale(.85) translateY(-10px);opacity:.4}to{transform:scale(1) translateY(0);opacity:1}}
+    .card.red{color:#c11}
+    .card .corner{position:absolute;font-size:13px}
+    .card .tl{top:6px;left:6px}
+    .card .br{bottom:6px;right:6px;transform:rotate(180deg)}
+    .card.back{background: repeating-linear-gradient(45deg, #1b2a68, #1b2a68 8px, #0e1c52 8px, #0e1c52 16px); color:transparent; border-color:#0f1a49}
+
+    /* Dealer speech & outcome */
+    .speech{position:absolute;top:8px;left:50%;transform:translateX(-50%);max-width:70%;padding:10px 14px;border-radius:16px;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.18);box-shadow:var(--shadow);text-align:center;animation:fadeIn .3s ease-out}
+    @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    .speech .name{font-weight:800;color:var(--accent);margin-right:6px}
+    .speech.bump{animation:bump .3s ease-out}
+    @keyframes bump{from{transform:translateX(-50%) scale(.98)}50%{transform:translateX(-50%) scale(1.03)}to{transform:translateX(-50%) scale(1)}}
+    .outcome-badge{position:absolute;top:14px;right:14px;font-weight:800;background:linear-gradient(180deg,#222,#111);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 12px;color:#ffe7a3;box-shadow:var(--shadow);animation:bounceIn .4s}
+    @keyframes bounceIn{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.1);opacity:1}100%{transform:scale(1)}}
+
+    /* Buttons */
+    button{border:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.05));color:var(--text);padding:10px 16px;border-radius:12px;cursor:pointer;transition:.2s transform,.2s filter,.2s box-shadow;box-shadow:var(--shadow);margin:4px}
+    button:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.12);box-shadow:0 12px 22px rgba(0,0,0,.4)}
+    button:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(110,231,255,.35),0 8px 18px rgba(0,0,0,.45)}
+    button:disabled{opacity:.5;cursor:not-allowed;filter:saturate(.55)}
+    .btn-primary{background:linear-gradient(180deg,#34b4ff,#277bff);border-color:#1e57d6;color:#fff}
+    .btn-danger{background:linear-gradient(180deg,#ff6b6b,#e23636);border-color:#c02f2f;color:#fff}
+    .btn-ghost{background:transparent;border-color:rgba(255,255,255,.3)}
+
+    /* Action + Betting panels */
+    .actions.panel, .betting.panel{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center}
+    .actions.panel{margin-top:18px}
+    .betting.panel{margin-top:12px}
+    .betting .chip{min-width:84px;border-radius:14px;padding:10px 14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04)}
+    .betting .chip.plus{border-color:#2aa66a}
+    .betting .chip.minus{border-color:#7a89a6}
+    .pulse{animation:pulse 1.6s ease-in-out infinite}
+    @keyframes pulse{0%{filter:brightness(1)}50%{filter:brightness(1.15)}100%{filter:brightness(1)}}
+
+    /* Chip graphics on felt */
+    .chip-ui{--c:#e6e6e6; --ring:#d0d0d0; --text:#111; width:44px; height:44px; border-radius:50%; position:absolute; bottom:44px; left:50%; transform:translateX(-50%); display:flex; align-items:center; justify-content:center; font-weight:900; color:var(--text); text-shadow:0 1px 0 #fff2; box-shadow:0 4px 10px rgba(0,0,0,.5), inset 0 2px 6px rgba(255,255,255,.2); background:
+      radial-gradient(circle at 50% 50%, #fff8 0, #fff0 55%),
+      conic-gradient(from 0deg, #fff0 0 10%, #fff 10% 15%, #fff0 15% 25%, #fff 25% 30%, #fff0 30% 40%, #fff 40% 45%, #fff0 45% 55%, #fff 55% 60%, #fff0 60% 70%, #fff 70% 75%, #fff0 75% 85%, #fff 85% 90%, #fff0 90% 100%),
+      radial-gradient(circle at 50% 50%, var(--ring) 0 54%, #0000 55%),
+      radial-gradient(circle at 50% 50%, var(--c) 0 60%, var(--c) 60%);
+      border:2px solid #0002;
+    }
+    .chip-ui span{font-size:12px}
+    .chip-ui.place{animation: place .25s ease-out}
+    @keyframes place{from{transform:translate(-50%, 20px) scale(.9); opacity:.6} to{transform:translate(-50%, 0) scale(1); opacity:1}}
+
+    /* Footer rules centered */
+    footer{margin:26px auto;color:var(--muted);font-size:13px;max-width:900px;text-align:center;padding:0 16px}
+    footer .rules{font-size:14px;line-height:1.6;color:#cfe0ff}
+    footer .tag{display:inline-block;margin-top:8px;padding:6px 12px;border:1px solid rgba(255,255,255,.18);border-radius:999px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Blackjack — <em>The Greginning</em></h1>
+          <div class="sub">Standard rules, but Greg has <em>opinions</em>.</div>
+        </div>
+      </div>
+      <div class="sub">Keyboard: <span class="pill">D = Deal</span> <span class="pill">H = Hit</span> <span class="pill">S = Stand</span> <span class="pill">B = Double</span> <span class="pill">U = Surrender</span></div>
+    </header>
+
+    <div class="panel stats" role="status" aria-live="polite">
+      <div class="stat"><span class="sub">Bankroll</span> <b id="bankroll">$1,000</b></div>
+      <div class="stat"><span class="sub">Bet</span> <b id="betLabel">$25</b></div>
+      <div class="stat"><span class="sub">Deck</span> <b id="shoe">6 decks</b></div>
+      <div class="stat"><span class="sub">W/L/P</span> <b id="wlp">0/0/0</b></div>
+    </div>
+
+    <div class="felt" id="felt">
+      <div class="speech" id="dealerSpeech"><span class="name">Greg:</span> <span id="quips">“Cards speak. I just translate.”</span></div>
+      <div class="outcome-badge" id="outcome"></div>
+      <div class="hand" id="dealerHand"></div>
+      <div class="label"><span class="who">Greg</span> — Total: <span id="dealerTotal" class="tot">0</span></div>
+      <hr style="border-color: rgba(255,255,255,.06);margin:14px 0"/>
+      <div class="hand" id="playerHand"></div>
+      <div class="label"><span class="who">You</span> — Total: <span id="playerTotal" class="tot">0</span> <span id="softLabel" class="sub"></span></div>
+      <div class="bet-stack" id="betStack" aria-label="Bet chips"></div>
+    </div>
+
+    <!-- Actions panel -->
+    <div class="panel actions">
+      <button id="hitBtn" style="background:linear-gradient(180deg,#21d482,#119b5e);border-color:#0f7a4b">Hit</button>
+      <button id="standBtn" class="btn-primary">Stand</button>
+      <button id="doubleBtn" style="background:linear-gradient(180deg,#b388ff,#8156ff);border-color:#6a45e0">Double</button>
+      <button id="surrenderBtn" class="btn-danger">Surrender</button>
+    </div>
+
+    <!-- Betting controls panel under actions -->
+    <div class="panel betting">
+      <span class="sub">Adjust bet:</span>
+      <button class="chip minus" data-chip="-100">−$100</button>
+      <button class="chip minus" data-chip="-50">−$50</button>
+      <button class="chip minus" data-chip="-25">−$25</button>
+      <button class="chip minus" data-chip="-5">−$5</button>
+      <button class="chip plus" data-chip="5">+$5</button>
+      <button class="chip plus" data-chip="25">+$25</button>
+      <button class="chip plus" data-chip="50">+$50</button>
+      <button class="chip plus" data-chip="100">+$100</button>
+      <button id="dealBtn" class="btn-primary">Deal</button>
+      <button id="resetBtn" class="btn-ghost" title="Reset bankroll to $1000">Reset</button>
+    </div>
+  </div>
+
+  <footer>
+    <div class="rules"><strong>Rules:</strong> Greg stands on all 17s • Blackjack pays 3:2 • Double on first two cards • Late surrender allowed as first action • No splits/insurance.</div>
+    <div class="tag">Built for fun — odds are fair, attitude is not.</div>
+  </footer>
+
+<script>
+(function(){
+  // --- Utilities ---
+  const $ = sel => document.querySelector(sel);
+  const fmt = n => `$${n.toLocaleString()}`;
+  const delay = ms => new Promise(r => setTimeout(r, ms));
+  const suits = ['\u2660','\u2665','\u2666','\u2663']; // ♠ ♥ ♦ ♣
+  const isRed = s => (s==='\u2665'||s==='\u2666');
+
+  // --- WebAudio (no assets) ---
+  let actx; const audio=()=>{ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch{} } return actx; };
+  function beep({f=440,t=0.08,g=0.06,type='sine'}={}){ const a=audio(); if(!a) return; const o=a.createOscillator(); const v=a.createGain(); o.type=type; o.frequency.value=f; v.gain.setValueAtTime(0,a.currentTime); v.gain.linearRampToValueAtTime(g,a.currentTime+0.005); v.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+t); o.connect(v).connect(a.destination); o.start(); o.stop(a.currentTime+t+0.01); }
+  const sfx = { chip(){beep({f:280,type:'square'})}, deal(){beep({f:520,t:0.05,type:'triangle'})}, card(){beep({f:360,t:0.045,type:'square'})}, win(){beep({f:660,t:0.08}); setTimeout(()=>beep({f:880,t:0.08}),90)}, lose(){beep({f:200,t:0.12,type:'sawtooth'})}, click(){beep({f:420,t:0.03,type:'triangle'})}, shuffle(){beep({f:150,t:0.04}); setTimeout(()=>beep({f:220,t:0.04}),40); setTimeout(()=>beep({f:180,t:0.04}),80);} };
+
+  // --- State ---
+  const state = {
+    numDecks: 6, deck: [],
+    bankroll: 1000,
+    bet: 25,   // default bet
+    wager: 0,
+    player: {cards:[], doubled:false, surrendered:false},
+    dealer: {cards:[], hideHole:true},
+    stats: {w:0,l:0,p:0},
+    phase: 'idle' // idle|dealing|player|dealer|over
+  };
+
+  // --- Persistence ---
+  function load(){ try{ const o=JSON.parse(localStorage.getItem('jerk-bj')||'{}'); if(o.bankroll!=null) state.bankroll=o.bankroll; if(o.stats) state.stats=o.stats; }catch{} updateTopbar(); }
+  function save(){ localStorage.setItem('jerk-bj', JSON.stringify({bankroll: state.bankroll, stats: state.stats})); }
+
+  // --- Deck ---
+  function buildDeck(){ const d=[]; for(let n=0;n<state.numDecks;n++){ for(const s of suits){ for(const r of ['A','2','3','4','5','6','7','8','9','10','J','Q','K']) d.push({r,s}); } } for(let i=d.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [d[i], d[j]] = [d[j], d[i]]; } state.deck=d; setShoeLabel(); sfx.shuffle(); }
+  function draw(){ if(state.deck.length===0) buildDeck(); return state.deck.pop(); }
+  function ensurePenetration(){ if(state.deck.length < state.numDecks*52*0.25){ buildDeck(); say("Fresh deck. New cards, same decisions."); } }
+
+  // --- Hand Math ---
+  function handValue(cards){ if(!Array.isArray(cards)||cards.length===0) return {total:0,soft:false}; let total=0,aces=0; for(const c of cards){ if(!c||c.r==null) continue; if(c.r==='A'){aces++; total+=11} else if(['K','Q','J'].includes(c.r)){ total+=10 } else total+=Number(c.r); } while(total>21&&aces>0){ total-=10; aces--; } const soft=(cards||[]).some(c=>c&&c.r==='A') && total<=21 && aces>0; return {total,soft}; }
+  const isBlackjack = (hand) => Array.isArray(hand.cards) && hand.cards.length===2 && handValue(hand.cards).total===21;
+
+  // --- UI Rendering ---
+  function setShoeLabel(){ $('#shoe').textContent = `${state.numDecks} decks, ${state.deck.length} cards left`; }
+  function updateTopbar(){ $('#bankroll').textContent=fmt(state.bankroll); $('#betLabel').textContent=fmt(state.bet); $('#wlp').textContent=`${state.stats.w}/${state.stats.l}/${state.stats.p}`; setShoeLabel(); renderBetChips(); }
+  function cardEl(card, facedown=false){ const d=document.createElement('div'); d.className=`card ${facedown?'back':''} ${(!facedown && card && isRed(card.s))?'red':''}`; d.innerHTML=facedown?'':`<div class="corner tl">${card?.r??''}<br>${card?.s??''}</div><div>${(card?.r??'')+(card?.s??'')}</div><div class="corner br">${card?.r??''}<br>${card?.s??''}</div>`; return d; }
+  function renderHands(){ const dH=$('#dealerHand'), pH=$('#playerHand'); dH.innerHTML=''; pH.innerHTML=''; state.dealer.cards.forEach((c,i)=>{ if(!c) return; const facedown=(i===1 && state.dealer.hideHole); const el=cardEl(c,facedown); dH.appendChild(el); }); state.player.cards.forEach(c=>{ if(c) pH.appendChild(cardEl(c)); }); const dVal=handValue(state.dealer.cards), pVal=handValue(state.player.cards); let dealerLabel='0'; if(state.dealer.cards.length===0) dealerLabel='0'; else if(state.dealer.hideHole) dealerLabel = handValue([state.dealer.cards[0]]).total + ' + ?'; else dealerLabel = dVal.total; $('#dealerTotal').textContent=dealerLabel; $('#playerTotal').textContent=pVal.total; $('#softLabel').textContent=pVal.soft?'(soft)':''; }
+
+  // chips on felt reflect current bet (pre-deal) or wager (during hand)
+  function renderBetChips(){ const stack=$('#betStack'); if(!stack) return; stack.innerHTML=''; const amount=(['dealing','player','dealer','over'].includes(state.phase))? state.wager : state.bet; if(amount<=0) return; const denoms=[100,50,25,5]; let rem=amount,idx=0; for(const d of denoms){ let count=Math.floor(rem/d); rem-=count*d; for(let i=0;i<count;i++){ const chip=document.createElement('div'); chip.className='chip-ui place'; chip.style.bottom=(44+(idx*6))+'px'; chip.innerHTML=`<span>$${d}</span>`; stack.appendChild(chip); idx++; } } }
+
+  function setButtons(){ const inPlayer=state.phase==='player'; $('#hitBtn').disabled=!inPlayer; $('#standBtn').disabled=!inPlayer; $('#doubleBtn').disabled=!(inPlayer && state.player.cards.length===2 && state.bankroll>=state.bet && !state.player.surrendered); $('#surrenderBtn').disabled=!(inPlayer && state.player.cards.length===2 && !state.player.doubled); const canDeal=(state.phase==='idle'||state.phase==='over'); $('#dealBtn').disabled=!canDeal; $('#dealBtn').classList.toggle('pulse', canDeal); }
+  function setOutcome(text,color){ const el=$('#outcome'); el.textContent=text||''; el.style.color=color||'#ffe7a3'; }
+
+  // --- Dealer sass (always on, expanded) ---
+  const QUIPS = {
+    deal:[
+      "Welcome to the table. Try not to embarrass yourself.",
+      "Freshly shuffled — like your confidence. Temporary.",
+      "House edge? No, house <you>.",
+      "You brought a strategy? Adorable.",
+      "Nice bet. Bold choice for someone with your luck.",
+      "Smile for the cameras. They love a comeback that never comes.",
+      "Feeling lucky? Statistics disagree.",
+      "I’ve seen warmer welcomes at parking meters.",
+      "Betting already? Impulsive. Brave. Mostly impulsive.",
+      "Place your chips. I’ll place my expectations: low.",
+      "Welcome back. Your seat kept winning without you.",
+      "New hand, same main character energy.",
+      "I shuffled the deck and your excuses.",
+      "Stretch first; carrying this table will be heavy.",
+      "I preheated the felt for your losses.",
+      "This table is a judgement-free zone. Kidding.",
+      "New round, fresh disappointment pending.",
+      "Your chips look nervous.",
+      "Bring a plan. I’ll bring reality.",
+      "We play cards; you play pretend."
+    ],
+    hitLow:[
+      "Playing it safe? Cute.", "Hit me? No, hit yourself.", "Tap tap tap—addicted to risk, huh?",
+      "Minimum effort, maximum delusion.", "Baby steps. Right into a pit.", "Nickel-and-diming destiny.",
+      "Pecking at the deck like a nervous pigeon.", "Sure, add a 3 to that masterpiece.", "Chiseling a statue with a spoon, I see.",
+      "Whittling down the odds with a butter knife.", "Tiny cuts, big consequences.", "Careful, you’ll paper-cut your luck.",
+      "Even your hits are shy.", "Tap dancing on thin ice.", "That courage came with training wheels."
+    ],
+    hitHigh:[
+      "Going for it at %t? Bold. Questionable, but bold.", "If you bust, I’ll try to look surprised.", "YOLO? More like YOL-don’t.",
+      "I dare you to draw a paint chip.", "%t and still hungry? Respect. Reckless, but respect.", "Ah yes, the ‘belief’ strategy.",
+      "I love a cliff dive with extra steps.", "Dealer’s favorite meal: overcooked hands.", "Your guardian angel just requested PTO.",
+      "Gravity called; it wants a word.", "Braver than your bankroll.", "This is where heroes become anecdotes.",
+      "You and hubris make a cute couple.", "That click was optimism breaking.", "Okay I’m listening—teach me regret."
+    ],
+    bust:[
+      "Oof. Tragic. Truly.", "If it helps: it doesn't.", "That's a skill issue.",
+      "I’ve seen banana peels with better balance.", "Boom. Confetti’s in the shop.", "That 22 is giving try-hard.",
+      "New record? For disappointment, yes.", "Busted like a discount piñata.", "They’ll name a pothole after that pothole.",
+      "Paper bag over the chips, please.", "That’s a plot twist no one wanted.", "You just invented 22. Groundbreaking.",
+      "Airball. But with cards.", "Bust-o-rama.", "The deck says no, loudly."
+    ],
+    standLow:[
+      "Standing on %t? Bold strategy, Cotton.", "Confidence is a hell of a drug.", "Scared money makes… this.",
+      "Hiding behind a %t? Respect the commitment.", "You parked in a loading zone.", "Small hand, big dreams.",
+      "Let’s see if ‘hope’ beats math.", "Parking a tricycle in freeway traffic.", "That stand squeaked.",
+      "Playing statue now?", "Benchwarmer energy.", "Bracing for impact, I see.",
+      "You’re trusting the universe. Yikes.", "Wishful thinking: the sequel.", "Okay, we’ll both wait for a miracle."
+    ],
+    standHigh:[
+      "Fine, hide behind your %t.", "Smart. Boring, but smart.", "Look at you, pretending to be disciplined.",
+      "Sensible play. I’ll allow it.", "Responsible? Gross. But fine.", "Even you couldn’t mess this up… probably.",
+      "Textbook move. Did you read it or just fold the page?", "Now you’re cooking with instructions.", "Adulting detected.",
+      "This might actually work.", "Finally, a decision I don’t hate.", "That stand had posture.",
+      "Playing like you’ve been hurt before.", "Respectable. Annoying, but respectable.", "You found the brake pedal."
+    ],
+    double:[
+      "Ah, courage and poor judgment—my two favorite spices.", "Double trouble. Mostly for you.", "Putting the 'fun' in fundamentally flawed.",
+      "Twice the bet, half the wisdom.", "Big button, big feelings.", "Double down? You sure you read the brochure?",
+      "This is either genius or rent money.", "Investing heavily in vibes, I see.", "High risk, high comedy.",
+      "Bold move—your accountant just sighed.", "Two chips forward, one brain cell back.", "Epic or eulogy—spin the wheel.",
+      "You just proposed to variance.", "YOLO with paperwork.", "Nothing says confidence like panic-clicking double."
+    ],
+    surrender:[
+      "Retreat? Tactical. Still funny, though.", "Half back, full shame.", "I respect it. Barely.", "Live to lose another day.",
+      "Bravely running away.", "A strategic ‘nope’.", "At least your dignity folded neatly.", "You just speedran disappointment any%.",
+      "Folding faster than beach chairs.", "Graceful exit. Emphasis on exit.", "You blinked first.", "Retreat achieved; pride pending.",
+      "Sometimes the bravest choice is surrendering… said no one here.", "Savings account says thanks.", "New nickname: Half-back Hero."
+    ],
+    dealerBJ:[
+      "Natural. The only natural thing about me.", "Peek-a-boo: I win.", "Told you the deck likes me more.",
+      "Ace up? Face down. You’re done.", "Consider this a speedrun.", "I didn’t even break a sweat.",
+      "It’s like the deck reads my diary.", "Blink and you’ll miss your chips.", "We call that ‘efficient disappointment’.",
+      "No lines, no waiting, just losing.", "That escalated efficiently.", "Shortest story ever: I win."
+    ],
+    playerBJ:[
+      "Ugh. Congrats or whatever.", "Enjoy it. It won’t last.", "Cool 3:2. Try not to spend it all on feelings.",
+      "Even a broken shuffle hits 21 sometimes.", "Write it down—won’t happen often.", "Fine. One victory lap. Small one.",
+      "I’ll clap once. There.", "You found the on switch.", "Screenshot this for your biography.",
+      "Savor it. I’m already over it.", "Okay, that was clean.", "Ruin my narrative, why don’t you."
+    ],
+    win:[
+      "Okay, you got one. Happy now?", "Even a broken clock, etc.", "Fine. I’ll allow it.",
+      "You win. My condolences to variance.", "Clip it. You’ll need evidence later.", "Luck speedran your skill gap.",
+      "Congrats. You beat the tutorial boss.", "Sure, take it. I insist.", "You outplayed me. Accidentally, I assume.",
+      "Enjoy the dopamine. It’s leased.", "RNG took pity.", "That win had training wheels.",
+      "Mark the calendar: anomaly detected.", "Alright, hotshot.", "You win; my patience loses."
+    ],
+    lose:[
+      "Order up: humble pie.", "House always wins. Eventually.", "Thanks for the donation.",
+      "Consider it a cover charge for entertainment.", "Your chips? In a better place. My rack.", "I’ll send flowers to your bankroll.",
+      "We accept tips, but that was generous.", "You’re really good at giving.", "I’m framing this for HR: ‘excellent performance’.",
+      "Don’t worry, the pain is character building.", "That hand aged like milk.", "Should’ve hit undo IRL.",
+      "A masterclass in what not to do.", "Spicy loss. Zesty, even.", "I felt that one. In a good way."
+    ],
+    push:[
+      "A tie. Riveting.", "We both wasted our time.", "Push. Like your luck—stuck.",
+      "Parity achieved. Joy not included.", "No one’s happy. Especially me.", "We tied. Friendship bracelet not included.",
+      "A thrilling zero-sum.", "Participation trophies all around.", "Two winners? Incorrect. Two losers.",
+      "Stalemate. Yawn.", "Push it somewhere else.", "I’ll consider that a drawl."
+    ],
+  };
+  function say(line){ const el=$('#dealerSpeech'); $('#quips').textContent='"'+line+'"'; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+  function maybe(kind, ctx={}){ const pool=QUIPS[kind]||[]; if(pool.length===0) return; let line=pool[Math.floor(Math.random()*pool.length)]||''; if(line.includes('%t')) line=line.replace('%t', ctx.total??0); say(line); }
+
+  // --- Game Flow ---
+  async function deal(){ if(!(state.phase==='idle'||state.phase==='over')) return; ensurePenetration(); state.phase='dealing'; $('#felt').classList.remove('jerk-win'); setOutcome(''); sfx.deal();
+    const bet = Math.max(5, Math.floor(state.bet/5)*5); if(bet<=0) return alert('Place a bet first.'); if(bet>state.bankroll) return alert('Bet exceeds bankroll.');
+    state.bet=bet; state.wager=bet; state.bankroll-=bet; updateTopbar();
+    state.player={cards:[],doubled:false,surrendered:false}; state.dealer={cards:[],hideHole:true}; renderHands(); setButtons(); maybe('deal');
+    state.player.cards.push(draw()); renderHands(); sfx.card(); await delay(120);
+    state.dealer.cards.push(draw()); renderHands(); sfx.card(); await delay(120);
+    state.player.cards.push(draw()); renderHands(); sfx.card(); await delay(120);
+    state.dealer.cards.push(draw()); renderHands(); sfx.card(); await delay(120);
+
+    const up=state.dealer.cards[0]; const upVal=(up&&(up.r==='A'||['10','J','Q','K'].includes(up.r)));
+    const playerBJ=isBlackjack(state.player); if(playerBJ){ setOutcome('Blackjack! (3:2)', '#ffd46b'); maybe('playerBJ'); sfx.win(); }
+
+    if(upVal){ await delay(220); if(isBlackjack(state.dealer)){ state.dealer.hideHole=false; renderHands(); await delay(150); if(playerBJ){ state.phase='over'; state.stats.p++; state.bankroll += state.wager; setOutcome('Push. Both have Blackjack.', '#ffd46b'); say('Parity is such a buzzkill.'); } else { state.phase='over'; state.stats.l++; setOutcome('Dealer has Blackjack. You lose.', getCSS('--danger')); $('#felt').classList.add('jerk-win'); maybe('dealerBJ'); sfx.lose(); } updateTopbar(); save(); setButtons(); return; } }
+    if(playerBJ){ state.phase='over'; state.stats.w++; state.bankroll += Math.floor(state.wager*2.5); updateTopbar(); save(); setButtons(); return; }
+
+    state.phase='player'; setButtons(); renderHands(); }
+
+  async function hit(){ if(state.phase!=='player') return; const v=handValue(state.player.cards).total; maybe(v>=12?'hitHigh':'hitLow',{total:v}); state.player.cards.push(draw()); renderHands(); sfx.card(); const after=handValue(state.player.cards).total; if(after>21){ await delay(100); state.phase='over'; state.stats.l++; updateTopbar(); save(); setOutcome('Bust. You lose.', getCSS('--danger')); $('#felt').classList.add('jerk-win'); maybe('bust'); sfx.lose(); setButtons(); } }
+  async function stand(){ if(state.phase!=='player') return; const v=handValue(state.player.cards).total; maybe(v>=17?'standHigh':'standLow',{total:v}); state.phase='dealer'; setButtons(); await dealerPlay(); }
+  async function doubleDown(){ if(state.phase!=='player'||state.player.cards.length!==2||state.bankroll<state.bet) return; state.bankroll-=state.bet; state.player.doubled=true; state.wager=state.bet*2; updateTopbar(); maybe('double'); state.player.cards.push(draw()); renderHands(); sfx.card(); await delay(120); const after=handValue(state.player.cards).total; if(after>21){ state.phase='over'; state.stats.l++; updateTopbar(); save(); setOutcome('Bust after double. Rip.', getCSS('--danger')); $('#felt').classList.add('jerk-win'); maybe('bust'); sfx.lose(); setButtons(); return;} state.phase='dealer'; setButtons(); await dealerPlay(); }
+  async function surrender(){ if(state.phase!=='player'||state.player.cards.length!==2||state.player.doubled) return; state.player.surrendered=true; state.phase='over'; state.bankroll += Math.floor(state.wager*0.5); state.stats.l++; updateTopbar(); save(); setOutcome('You surrendered. Lose half your bet.', '#ffaf7a'); say('Half back, full shame.'); setButtons(); }
+
+  async function dealerPlay(){ state.dealer.hideHole=false; renderHands(); await delay(250); if(state.player.surrendered){ state.phase='over'; setButtons(); return; } const pVal=handValue(state.player.cards).total; if(pVal===21 && state.player.cards.length===2){ state.phase='over'; setButtons(); return; } while(true){ const d=handValue(state.dealer.cards); const total=d.total; if(total>21) break; if(total>16) break; state.dealer.cards.push(draw()); renderHands(); sfx.card(); await delay(220);} await settle(); }
+
+  async function settle(){ const p=handValue(state.player.cards).total; const d=handValue(state.dealer.cards).total; let result='push'; if(p>21){result='lose'} else if(d>21){result='win'} else if(p>d){result='win'} else if(p<d){result='lose'}; if(result==='win'){ state.bankroll += state.wager*2; state.stats.w++; setOutcome('You win!', getCSS('--ok')); sfx.win(); say('Fine. I’ll allow it.'); } else if(result==='lose'){ state.stats.l++; setOutcome('Dealer wins.', getCSS('--danger')); sfx.lose(); say('Thank you for your generosity.'); $('#felt').classList.add('jerk-win'); } else { state.bankroll += state.wager; state.stats.p++; setOutcome('Push.', '#ffd46b'); say('A tie. Thrilling.'); } state.phase='over'; updateTopbar(); save(); setButtons(); }
+
+  function getCSS(v){ return getComputedStyle(document.documentElement).getPropertyValue(v)||''; }
+
+  // --- Wiring ---
+  function bind(){ $('#dealBtn').addEventListener('click', ()=>{ sfx.click(); deal(); }); $('#hitBtn').addEventListener('click', ()=>{ sfx.click(); hit(); }); $('#standBtn').addEventListener('click', ()=>{ sfx.click(); stand(); }); $('#doubleBtn').addEventListener('click', ()=>{ sfx.click(); doubleDown(); }); $('#surrenderBtn').addEventListener('click', ()=>{ sfx.click(); surrender(); }); $('#resetBtn').addEventListener('click', ()=>{ if(confirm('Reset bankroll to $1000?')){ state.bankroll=1000; save(); updateTopbar(); }});
+    document.querySelectorAll('[data-chip]').forEach(btn=>{ btn.addEventListener('click',()=>{ const inc=Number(btn.dataset.chip); let v=Math.max(0, state.bet + inc); v=Math.min(v, state.bankroll); state.bet=v; updateTopbar(); sfx.chip(); }); });
+    document.addEventListener('keydown', e=>{ if(e.key==='d'||e.key==='D') return $('#dealBtn').click(); if(e.key==='h'||e.key==='H') return $('#hitBtn').click(); if(e.key==='s'||e.key==='S') return $('#standBtn').click(); if(e.key==='b'||e.key==='B') return $('#doubleBtn').click(); if(e.key==='u'||e.key==='U') return $('#surrenderBtn').click(); }); }
+
+  // --- Init & minimal sanity tests ---
+  function tests(){ try{ const hv0=handValue([]); console.assert(hv0.total===0,'hv empty'); const hvU=handValue([undefined]); console.assert(hvU.total===0,'hv undef safe'); const hv21=handValue([{r:'A',s:'\u2660'},{r:'K',s:'\u2665'}]); console.assert(hv21.total===21,'A+K=21'); }catch(e){ console.warn('self-tests failed', e); } }
+  function init(){ load(); buildDeck(); renderHands(); setButtons(); renderBetChips(); tests(); }
+  bind(); init();
+})();
+</script>
+</body>
+</html>
